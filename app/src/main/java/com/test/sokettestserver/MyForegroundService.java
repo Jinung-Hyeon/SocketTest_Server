@@ -10,6 +10,7 @@ import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
@@ -19,9 +20,11 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
+import com.test.sokettestserver.MainActivity;
 
 public class MyForegroundService extends Service {
 
+    private static final String TAG = "MyMsg";
     ServerSocket serverSocket;
     Socket socket;
     DataInputStream is;
@@ -36,7 +39,9 @@ public class MyForegroundService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        final String port = "5002";
+        //Log.d(TAG, "onStartCommand  : 리시버타고 넘어옴");
+        getPackageList();
+        final String port = "5001";
 
         final String CHANNEL_ID = "Foreground Service ID";
         NotificationChannel channel = new NotificationChannel(
@@ -61,7 +66,6 @@ public class MyForegroundService extends Service {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return super.START_STICKY;
     }
 
@@ -80,27 +84,37 @@ public class MyForegroundService extends Service {
                         while (true) {
                             try{
                                 int toggle = 0;
-                                int signal;
                                 //서버에 접속하는 클라이언트 소켓 얻어오기(클라이언트가 접속하면 클라이언트 소켓 리턴)
                                 if(toggle == 0){
                                     socket = serverSocket.accept(); //서버는 클라이언트가 접속할 때까지 여기서 대기. 접속하면 다음 코드로 넘어감
                                     //클라이언트와 데이터를 주고 받기 위한 통로 구축
                                     is = new DataInputStream(socket.getInputStream()); //클라이언트로부터 메세지를 받기 위한 통로
                                     os = new DataOutputStream(socket.getOutputStream()); //클라이언트로부터 메세지를 보내기 위한 통로
+                                    int signal = is.read();
+                                    Log.d("signal", "consignal: " + signal);
                                     Log.d("connnnn", "연결완료");
                                     toggle++;
-                                }
-                                signal = is.read();
-                                if (signal == -1) {
-                                    Log.d("connnnn", "연결해제");
-                                    toggle = 0;
-                                    getPackageList();
-                                    //runAppPackage("com.test.sockettestclient/.MainActivity ");
+                                    if (signal == -1) {
+                                        Log.d("signal", "signal: " + signal);
+                                        Log.d("connnnn", "연결해제");
+                                        toggle = 0;
+                                        getPackageList();
+                                        //runAppPackage("com.test.sockettestclient/.MainActivity ");
+                                    } else if (signal == 1) {
+                                        serverSocket.close();
+                                        MainActivity.signal = 1;
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                            stopForeground(true);
+                                            stopSelf();
+                                        }
+                                        break;
+                                    }
                                 }
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
                         }
+                        Thread.interrupted();
                     }
                 }
         ).start();
@@ -119,7 +133,7 @@ public class MyForegroundService extends Service {
         try {
             for (int i = 0; i < mApps.size(); i++) {
                 if(mApps.get(i).activityInfo.packageName.startsWith("com.test.sockettestclient")){
-                    Log.d("start", "실행시킴");
+                    Log.d(TAG, "실행시킴");
                     break;
                 }
             }
@@ -131,4 +145,5 @@ public class MyForegroundService extends Service {
             e.printStackTrace();
         }
     }
+
 }

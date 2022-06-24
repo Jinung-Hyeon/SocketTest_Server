@@ -1,18 +1,28 @@
 package com.test.sokettestserver;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.TargetApi;
 import android.app.ActivityManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import java.net.InetAddress;
@@ -23,7 +33,10 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "SimpleTest";
+    private static final int ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 1;
+    public static int signal = 0;
     TextView ipText, portText;
+    Button btn_start;
 
 
     @Override
@@ -31,9 +44,27 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         ipText = findViewById(R.id.ip);
         portText = findViewById(R.id.port);
+        btn_start = findViewById(R.id.btn_start);
 
+
+        //브로드캐스트 리시버 사용시 액티비티 띄우지 못한 문제 Overlay View로 해결
+        //다른 앱 위에 그리기 허용 체크 해야함.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {   // 마시멜로우 이상일 경우
+            if (!Settings.canDrawOverlays(this)) {              // 다른앱 위에 그리기 체크
+                Uri uri = Uri.fromParts("package" , getPackageName(), null);
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, uri);
+                startActivityForResult(intent, ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE);
+            } else {
+                //getPackageList();
+                startForeground();
+            }
+        } else {
+            //getPackageList();
+            startForeground();
+        }
 
         //내 아이피 확인 및 세팅
         try {
@@ -42,6 +73,19 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+
+
+        btn_start.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                signal = 0;
+                getPackageList();
+                startForeground();
+            }
+        });
+    }
+
+    public void startForeground(){
         if(!foregroundServiceRunning()){
             Intent serviceIntent = new Intent(this, MyForegroundService.class);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -49,8 +93,6 @@ public class MainActivity extends AppCompatActivity {
                 startForegroundService(serviceIntent);
             }
         }
-        getPackageList();
-
     }
 
     //포그라운드 서비스가 실행중인지 확인하는 메소드
@@ -72,19 +114,6 @@ public class MainActivity extends AppCompatActivity {
         int ipInt = wifiInfo.getIpAddress();
         return InetAddress.getByAddress(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(ipInt).array()).getHostAddress();
     }
-
-    /*
-    public void ServerSocketOpen(View view){
-        if(portText.getText().toString() == null){
-            Toast.makeText(this, "포트번호를 입력해주세요.", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this,"Socket Open", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(this, MyForegroundService.class);
-            intent.putExtra("PortNumber", portText.getText().toString());
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startService(intent);
-        }
-    }*/
 
     //다른 앱을 실행시켜주는 메소드
     public void getPackageList() {
@@ -115,7 +144,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        getPackageList();
+        Log.d(TAG, "onResumeSignal: " + signal);
+        if (signal == 0){
+            getPackageList();
+        }
+
         Log.d(TAG, "onResume: ");
     }
 
@@ -123,8 +156,22 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        getPackageList();
+        if (signal == 0) {
+            getPackageList();
+        }
         Log.d(TAG, "onPause: ");
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE) {
+            if (!Settings.canDrawOverlays(this)) {
+                finish();
+            } else {
+                startForeground();
+            }
+        }
+    }
 }
