@@ -94,14 +94,14 @@ public class MyForegroundService extends Service {
                                     is = new DataInputStream(socket.getInputStream()); //클라이언트로부터 메세지를 받기 위한 통로
                                     os = new DataOutputStream(socket.getOutputStream()); //클라이언트로부터 메세지를 보내기 위한 통로
                                     int signal = is.read();
-                                    Log.e(TAG, "consignal: " + signal);
-                                    Log.e(TAG, "연결완료");
+                                    Log.d(TAG, "consignal: " + signal);
+                                    Log.d(TAG, "연결완료");
                                     toggle++;
                                     if (signal == -1) {
-                                        Log.e(TAG, "signal: " + signal);
-                                        Log.e(TAG, "연결해제");
+                                        Log.d(TAG, "signal: " + signal);
+                                        Log.d(TAG, "연결해제");
                                         toggle = 0;
-                                        getPackageList();
+                                        //getPackageList();
                                     } else if (signal == 1) {
                                         serverSocket.close();
                                         MainActivity.signal = 1;
@@ -110,6 +110,8 @@ public class MyForegroundService extends Service {
                                             stopSelf();
                                         }
                                         break;
+                                    } else if (signal == 2){
+                                        getPackageList();
                                     }
 
                                 }

@@ -75,6 +75,9 @@ public class MainActivity extends AppCompatActivity {
                 startForeground();
             }
         });
+
+        finish();
+
     }
 
     public void startForeground(){
@@ -130,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         Log.d(TAG, "onResumeSignal: " + signal);
         if (signal == 0){
-            //getPackageList();
+            getPackageList();
         }
 
         Log.d(TAG, "onResume: ");
