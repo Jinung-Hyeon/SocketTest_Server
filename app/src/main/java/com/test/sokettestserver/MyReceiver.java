@@ -14,7 +14,6 @@ public class MyReceiver extends BroadcastReceiver {
         String action = intent.getAction();
 
         if(action.equals(Intent.ACTION_BOOT_COMPLETED)){
-            Log.d("broadmsg", "broadcastreciver: ");
             Toast.makeText(context,"\"마을회관 DID\"가 구동 되었습니다.", Toast.LENGTH_SHORT).show();
             Intent i = new Intent(context, MyForegroundService.class);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

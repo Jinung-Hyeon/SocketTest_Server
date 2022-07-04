@@ -24,7 +24,7 @@ import com.test.sokettestserver.MainActivity;
 
 public class MyForegroundService extends Service {
 
-    private static final String TAG = "MyMsg";
+    private static final String TAG = "ServerTest";
     ServerSocket serverSocket;
     Socket socket;
     DataInputStream is;
@@ -61,12 +61,15 @@ public class MyForegroundService extends Service {
             }
         }
 
+
+
         try {
             ServerSocketOpen(port);
         } catch (IOException e) {
             e.printStackTrace();
         }
         return super.START_STICKY;
+
     }
 
 
@@ -91,15 +94,14 @@ public class MyForegroundService extends Service {
                                     is = new DataInputStream(socket.getInputStream()); //클라이언트로부터 메세지를 받기 위한 통로
                                     os = new DataOutputStream(socket.getOutputStream()); //클라이언트로부터 메세지를 보내기 위한 통로
                                     int signal = is.read();
-                                    Log.d("signal", "consignal: " + signal);
-                                    Log.d("connnnn", "연결완료");
+                                    Log.e(TAG, "consignal: " + signal);
+                                    Log.e(TAG, "연결완료");
                                     toggle++;
                                     if (signal == -1) {
-                                        Log.d("signal", "signal: " + signal);
-                                        Log.d("connnnn", "연결해제");
+                                        Log.e(TAG, "signal: " + signal);
+                                        Log.e(TAG, "연결해제");
                                         toggle = 0;
                                         getPackageList();
-                                        //runAppPackage("com.test.sockettestclient/.MainActivity ");
                                     } else if (signal == 1) {
                                         serverSocket.close();
                                         MainActivity.signal = 1;
@@ -109,7 +111,9 @@ public class MyForegroundService extends Service {
                                         }
                                         break;
                                     }
+
                                 }
+
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -145,5 +149,4 @@ public class MyForegroundService extends Service {
             e.printStackTrace();
         }
     }
-
 }

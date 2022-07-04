@@ -66,14 +66,6 @@ public class MainActivity extends AppCompatActivity {
             startForeground();
         }
 
-        //내 아이피 확인 및 세팅
-        try {
-            ipText.setText(getLocalAddress());
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-
-
 
         btn_start.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -106,14 +98,6 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    //내 IP얻기
-    private String getLocalAddress() throws UnknownHostException{
-        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-        assert wifiManager != null;
-        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-        int ipInt = wifiInfo.getIpAddress();
-        return InetAddress.getByAddress(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(ipInt).array()).getHostAddress();
-    }
 
     //다른 앱을 실행시켜주는 메소드
     public void getPackageList() {
@@ -146,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         Log.d(TAG, "onResumeSignal: " + signal);
         if (signal == 0){
-            getPackageList();
+            //getPackageList();
         }
 
         Log.d(TAG, "onResume: ");
@@ -157,9 +141,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         if (signal == 0) {
-            getPackageList();
+            //getPackageList();
         }
-        Log.d(TAG, "onPause: ");
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -174,4 +157,5 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
 }
