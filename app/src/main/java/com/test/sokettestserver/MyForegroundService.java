@@ -40,7 +40,7 @@ public class MyForegroundService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         //Log.d(TAG, "onStartCommand  : 리시버타고 넘어옴");
-        getPackageList();
+        //getPackageList();
         final String port = "5001";
 
         final String CHANNEL_ID = "Foreground Service ID";
@@ -81,46 +81,39 @@ public class MyForegroundService extends Service {
                         try {
                             //서버 소켓 생성
                             serverSocket = new ServerSocket(Integer.parseInt(port));
+                            //서버에 접속하는 클라이언트 소켓 얻어오기(클라이언트가 접속하면 클라이언트 소켓 리턴)
+                            socket = serverSocket.accept(); //서버는 클라이언트가 접속할 때까지 여기서 대기. 접속하면 다음 코드로 넘어감
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                        int toggle = 0;
                         while (true) {
                             try{
-                                int toggle = 0;
-                                //서버에 접속하는 클라이언트 소켓 얻어오기(클라이언트가 접속하면 클라이언트 소켓 리턴)
-                                if(toggle == 0){
+                                //클라이언트와 데이터를 주고 받기 위한 통로 구축
+                                is = new DataInputStream(socket.getInputStream()); //클라이언트로부터 메세지를 받기 위한 통로
+                                os = new DataOutputStream(socket.getOutputStream()); //클라이언트로부터 메세지를 보내기 위한 통로
+                                int signal = is.read();
+                                Log.d(TAG, "consignal: " + signal);
+                                if (signal == -1) {
+                                    Log.d(TAG, "signal: " + signal);
+                                    Log.d(TAG, "연결해제");
                                     socket = serverSocket.accept(); //서버는 클라이언트가 접속할 때까지 여기서 대기. 접속하면 다음 코드로 넘어감
-                                    //클라이언트와 데이터를 주고 받기 위한 통로 구축
-                                    is = new DataInputStream(socket.getInputStream()); //클라이언트로부터 메세지를 받기 위한 통로
-                                    os = new DataOutputStream(socket.getOutputStream()); //클라이언트로부터 메세지를 보내기 위한 통로
-                                    int signal = is.read();
-                                    Log.d(TAG, "consignal: " + signal);
-                                    Log.d(TAG, "연결완료");
-                                    toggle++;
-                                    if (signal == -1) {
-                                        Log.d(TAG, "signal: " + signal);
-                                        Log.d(TAG, "연결해제");
-                                        toggle = 0;
-                                        //getPackageList();
-                                    } else if (signal == 1) {
-                                        serverSocket.close();
-                                        MainActivity.signal = 1;
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                            stopForeground(true);
-                                            stopSelf();
-                                        }
-                                        break;
-                                    } else if (signal == 2){
-                                        getPackageList();
-                                    }
+                                    //socket.setSoTimeout(3000);
+                                    //getPackageList();
 
+                                } else if (signal == 1) { //화면이 잠기어 클라이언트 단에서 onPause로 빠지면 시그널 1이 넘어옴. 서버소켓을 닫고 다시 클라이언트소켓을 받을준비
+                                    Log.d(TAG, "클라이언트 화면이 잠겼습니다. 서버소켓을 종료하고 재실행하여 클라이언트 소켓연결까지 대기합니다.");
+                                    serverSocket.close();
+                                    socket = serverSocket.accept();
+                                } else if (signal == 2){
+                                    getPackageList();
                                 }
 
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
                         }
-                        Thread.interrupted();
+                        //Thread.interrupted();
                     }
                 }
         ).start();
