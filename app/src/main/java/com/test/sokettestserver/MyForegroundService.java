@@ -40,7 +40,7 @@ public class MyForegroundService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         //Log.d(TAG, "onStartCommand  : 리시버타고 넘어옴");
-        //getPackageList();
+        getPackageList();
         final String port = "5001";
 
         final String CHANNEL_ID = "Foreground Service ID";
