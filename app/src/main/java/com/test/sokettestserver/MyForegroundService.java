@@ -1,10 +1,14 @@
 package com.test.sokettestserver;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
@@ -19,6 +23,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Calendar;
 import java.util.List;
 import com.test.sokettestserver.MainActivity;
 
@@ -29,6 +34,7 @@ public class MyForegroundService extends Service {
     Socket socket;
     DataInputStream is;
     DataOutputStream os;
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -42,6 +48,7 @@ public class MyForegroundService extends Service {
         //Log.d(TAG, "onStartCommand  : 리시버타고 넘어옴");
         getPackageList();
         final String port = "5001";
+
 
         final String CHANNEL_ID = "Foreground Service ID";
         NotificationChannel channel = new NotificationChannel(
@@ -83,10 +90,10 @@ public class MyForegroundService extends Service {
                             serverSocket = new ServerSocket(Integer.parseInt(port));
                             //서버에 접속하는 클라이언트 소켓 얻어오기(클라이언트가 접속하면 클라이언트 소켓 리턴)
                             socket = serverSocket.accept(); //서버는 클라이언트가 접속할 때까지 여기서 대기. 접속하면 다음 코드로 넘어감
+                            Log.d(TAG, "클라이언트가 접속했습니다.");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        int toggle = 0;
                         while (true) {
                             try{
                                 //클라이언트와 데이터를 주고 받기 위한 통로 구축
@@ -96,15 +103,13 @@ public class MyForegroundService extends Service {
                                 Log.d(TAG, "consignal: " + signal);
                                 if (signal == -1) {
                                     Log.d(TAG, "signal: " + signal);
-                                    Log.d(TAG, "연결해제");
+                                    Log.d(TAG, "클라이언트의 접속이 끊겼습니다.");
+                                    socket.close();
                                     socket = serverSocket.accept(); //서버는 클라이언트가 접속할 때까지 여기서 대기. 접속하면 다음 코드로 넘어감
+                                    Log.d(TAG, "클라이언트가 다시 연결되었습니다.");
                                     //socket.setSoTimeout(3000);
                                     //getPackageList();
 
-                                } else if (signal == 1) { //화면이 잠기어 클라이언트 단에서 onPause로 빠지면 시그널 1이 넘어옴. 서버소켓을 닫고 다시 클라이언트소켓을 받을준비
-                                    Log.d(TAG, "클라이언트 화면이 잠겼습니다. 서버소켓을 종료하고 재실행하여 클라이언트 소켓연결까지 대기합니다.");
-                                    serverSocket.close();
-                                    socket = serverSocket.accept();
                                 } else if (signal == 2){
                                     getPackageList();
                                 }
