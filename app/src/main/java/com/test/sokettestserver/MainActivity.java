@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,7 +49,6 @@ public class MainActivity extends AppCompatActivity {
         ipText = findViewById(R.id.ip);
         portText = findViewById(R.id.port);
         btn_start = findViewById(R.id.btn_start);
-
 
         //브로드캐스트 리시버 사용시 액티비티 띄우지 못한 문제 Overlay View로 해결
         //다른 앱 위에 그리기 허용 체크 해야함.

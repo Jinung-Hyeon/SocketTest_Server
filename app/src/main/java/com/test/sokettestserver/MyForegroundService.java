@@ -75,7 +75,7 @@ public class MyForegroundService extends Service {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return super.START_STICKY;
+        return START_STICKY;
 
     }
 
@@ -107,7 +107,6 @@ public class MyForegroundService extends Service {
                                     socket.close();
                                     socket = serverSocket.accept(); //서버는 클라이언트가 접속할 때까지 여기서 대기. 접속하면 다음 코드로 넘어감
                                     Log.d(TAG, "클라이언트가 다시 연결되었습니다.");
-                                    //socket.setSoTimeout(3000);
                                     //getPackageList();
 
                                 } else if (signal == 2){
@@ -120,8 +119,7 @@ public class MyForegroundService extends Service {
                         }
                         //Thread.interrupted();
                     }
-                }
-        ).start();
+                }).start();
     }
 
 
