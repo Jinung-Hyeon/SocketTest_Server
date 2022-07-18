@@ -101,16 +101,14 @@ public class MyForegroundService extends Service {
                                 os = new DataOutputStream(socket.getOutputStream()); //클라이언트로부터 메세지를 보내기 위한 통로
                                 int signal = is.read();
                                 Log.d(TAG, "consignal: " + signal);
-                                if (signal == -1) {
+                                if (signal == -1){
                                     Log.d(TAG, "signal: " + signal);
                                     Log.d(TAG, "클라이언트의 접속이 끊겼습니다.");
                                     socket.close();
+                                    getPackageList();
                                     socket = serverSocket.accept(); //서버는 클라이언트가 접속할 때까지 여기서 대기. 접속하면 다음 코드로 넘어감
                                     Log.d(TAG, "클라이언트가 다시 연결되었습니다.");
-                                    //getPackageList();
 
-                                } else if (signal == 2){
-                                    getPackageList();
                                 }
 
                             } catch (IOException e) {
