@@ -1,5 +1,7 @@
 package com.test.sokettestserver;
 
+import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -23,17 +25,26 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import com.test.sokettestserver.MainActivity;
 
 public class MyForegroundService extends Service {
 
     private static final String TAG = "ServerTest";
+
+    // 사용자가 임의로 껐다는 신호를 구분하기위한 변수
+    public static int clientSignal = 0;
+
     ServerSocket serverSocket;
     Socket socket;
     DataInputStream is;
     DataOutputStream os;
+
+    UdpThread udpThread;
 
 
     @Override
@@ -71,6 +82,8 @@ public class MyForegroundService extends Service {
 
 
         try {
+            udpThread = new UdpThread();
+            udpThread.start();
             ServerSocketOpen(port);
         } catch (IOException e) {
             e.printStackTrace();
@@ -78,6 +91,7 @@ public class MyForegroundService extends Service {
         return START_STICKY;
 
     }
+
 
 
     public void ServerSocketOpen(String port) throws IOException {
@@ -99,16 +113,37 @@ public class MyForegroundService extends Service {
                                 //클라이언트와 데이터를 주고 받기 위한 통로 구축
                                 is = new DataInputStream(socket.getInputStream()); //클라이언트로부터 메세지를 받기 위한 통로
                                 os = new DataOutputStream(socket.getOutputStream()); //클라이언트로부터 메세지를 보내기 위한 통로
+
                                 int signal = is.read();
-                                Log.d(TAG, "consignal: " + signal);
-                                if (signal == -1){
-                                    Log.d(TAG, "signal: " + signal);
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+
+                                //Log.d(TAG, "consignal: " + signal);
+                                if (signal == -1){  // is.read()에서 블록킹 상태로 기다리다가 클라이언트쪽 연결이 끊기면 -1을 리턴받음.(이걸로 클라이언트 단이 끊긴걸 알 수 있음)
+
+
                                     Log.d(TAG, "클라이언트의 접속이 끊겼습니다.");
                                     socket.close();
-                                    getPackageList();
-                                    socket = serverSocket.accept(); //서버는 클라이언트가 접속할 때까지 여기서 대기. 접속하면 다음 코드로 넘어감
-                                    Log.d(TAG, "클라이언트가 다시 연결되었습니다.");
 
+                                    switch (clientSignal){
+                                        case 0: // 앱이 강제로 종료되었을때
+                                            Log.d(TAG, "DID앱이 강제로 종료되었습니다. 다시 앱을 실행합니다.");
+                                            getPackageList();
+                                            break;
+                                        case 1: // 관리자가 앱을 종료 시켰을때
+                                            Log.d(TAG, "관리자가 앱을 종료했습니다. 다시 실행시키지 않습니다. clientSignal : " + clientSignal);
+                                            break;
+                                        case 2: // DID화면이 screen off가 되었을때
+                                            Log.d(TAG, "DID화면이 꺼졌습니다. : " + clientSignal);
+                                            break;
+                                    }
+
+                                    socket = serverSocket.accept(); //서버는 클라이언트가 접속할 때까지 여기서 대기. 접속하면 다음 코드로 넘어감
+                                    clientSignal = 0;
+                                    Log.d(TAG, "클라이언트가 다시 연결되었습니다. clientSignal : " + clientSignal);
                                 }
 
                             } catch (IOException e) {
@@ -117,6 +152,9 @@ public class MyForegroundService extends Service {
                         }
                         //Thread.interrupted();
                     }
+
+
+
                 }).start();
     }
 
@@ -144,5 +182,15 @@ public class MyForegroundService extends Service {
         catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public long goToSleepTime(){
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.HOUR_OF_DAY, 17);
+        c.set(Calendar.MINUTE, 24);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+
+        return c.getTimeInMillis();
     }
 }
