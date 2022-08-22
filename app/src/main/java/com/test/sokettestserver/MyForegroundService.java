@@ -1,22 +1,15 @@
 package com.test.sokettestserver;
 
-import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
@@ -25,19 +18,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-import com.test.sokettestserver.MainActivity;
 
 public class MyForegroundService extends Service {
 
-    private static final String TAG = "ServerTest";
+    private final String TAG = "ServerTest";
 
     // 사용자가 임의로 껐다는 신호를 구분하기위한 변수
     public static int clientSignal = 0;
+    private WorkTime workTime;
 
     ServerSocket serverSocket;
     Socket socket;
@@ -45,6 +34,8 @@ public class MyForegroundService extends Service {
     DataOutputStream os;
 
     UdpThread udpThread;
+
+
 
 
     @Override
@@ -57,6 +48,7 @@ public class MyForegroundService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         //Log.d(TAG, "onStartCommand  : 리시버타고 넘어옴");
+        workTime = new WorkTime();
         getPackageList();
         final String port = "5001";
 
@@ -116,7 +108,7 @@ public class MyForegroundService extends Service {
 
                                 int signal = is.read();
                                 try {
-                                    Thread.sleep(1000);
+                                    Thread.sleep(2000);
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
@@ -127,18 +119,24 @@ public class MyForegroundService extends Service {
 
                                     Log.d(TAG, "클라이언트의 접속이 끊겼습니다.");
                                     socket.close();
-
-                                    switch (clientSignal){
-                                        case 0: // 앱이 강제로 종료되었을때
-                                            Log.d(TAG, "DID앱이 강제로 종료되었습니다. 다시 앱을 실행합니다.");
-                                            getPackageList();
-                                            break;
-                                        case 1: // 관리자가 앱을 종료 시켰을때
-                                            Log.d(TAG, "관리자가 앱을 종료했습니다. 다시 실행시키지 않습니다. clientSignal : " + clientSignal);
-                                            break;
-                                        case 2: // DID화면이 screen off가 되었을때
-                                            Log.d(TAG, "DID화면이 꺼졌습니다. : " + clientSignal);
-                                            break;
+                                    if (System.currentTimeMillis() < workTime.startWorkTime().getTimeInMillis()) {
+                                        Log.e(TAG, "업무시간이 아닙니다. (일과시작전 조건문)");
+                                    } else if (System.currentTimeMillis() > workTime.finishWorkTime().getTimeInMillis()) {
+                                        Log.e(TAG, "업무시간이 아닙니다. (일과종료 이후 조건문)");
+                                    } else if (System.currentTimeMillis() < workTime.finishWorkTime().getTimeInMillis()){
+                                        Log.e(TAG, "업무시간입니다.");
+                                        switch (clientSignal){
+                                            case 0: // 앱이 강제로 종료되었을때
+                                                Log.d(TAG, "DID앱이 강제로 종료되었습니다. 다시 앱을 실행합니다.");
+                                                getPackageList();
+                                                break;
+                                            case 1: // 관리자가 앱을 종료 시켰을때
+                                                Log.d(TAG, "관리자가 앱을 종료했습니다. 다시 실행시키지 않습니다. clientSignal : " + clientSignal);
+                                                break;
+                                            case 2: // DID화면이 screen off가 되었을때
+                                                Log.d(TAG, "DID화면이 꺼졌습니다. : " + clientSignal);
+                                                break;
+                                        }
                                     }
 
                                     socket = serverSocket.accept(); //서버는 클라이언트가 접속할 때까지 여기서 대기. 접속하면 다음 코드로 넘어감
@@ -184,13 +182,4 @@ public class MyForegroundService extends Service {
         }
     }
 
-    public long goToSleepTime(){
-        Calendar c = Calendar.getInstance();
-        c.set(Calendar.HOUR_OF_DAY, 17);
-        c.set(Calendar.MINUTE, 24);
-        c.set(Calendar.SECOND, 0);
-        c.set(Calendar.MILLISECOND, 0);
-
-        return c.getTimeInMillis();
-    }
 }
