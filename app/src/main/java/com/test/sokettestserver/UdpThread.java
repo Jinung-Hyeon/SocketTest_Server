@@ -7,13 +7,13 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
 public class UdpThread extends Thread{
-    private static final String TAG = "msgmsg";
+
+    private final String TAG = "msgmsg";
 
     final int port = 5001;
 
     String msg;
-    MyForegroundService mf = new MyForegroundService();
-
+    ForegroundService mf = new ForegroundService();
 
     @Override
     public void run() {

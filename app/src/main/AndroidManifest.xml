@@ -34,17 +34,6 @@
         android:theme="@style/Theme.SoketTestServer"
         android:usesCleartextTraffic="true"
         tools:ignore="MissingTvBanner" >
-        <receiver
-            android:name=".MyReceiver"
-            android:enabled="true"
-            android:exported="true" >
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </receiver>
 
         <activity
             android:name=".MainActivity"
@@ -56,10 +45,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <service
-            android:name=".MyForegroundService"
-            android:enabled="true"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"

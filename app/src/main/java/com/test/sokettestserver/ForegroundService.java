@@ -11,8 +11,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -20,23 +18,20 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 
-public class MyForegroundService extends Service {
+public class ForegroundService extends Service {
 
     private final String TAG = "ServerTest";
 
     // 사용자가 임의로 껐다는 신호를 구분하기위한 변수
     public static int clientSignal = 0;
-    private WorkTime workTime;
+    private com.smsoft.lifesupporter_watchdog.WorkTime workTime;
 
-    ServerSocket serverSocket;
-    Socket socket;
-    DataInputStream is;
-    DataOutputStream os;
+    private ServerSocket serverSocket;
+    private Socket socket;
+    private DataInputStream is;
+    private DataOutputStream os;
 
-    UdpThread udpThread;
-
-
-
+    com.smsoft.lifesupporter_watchdog.UdpThread udpThread;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -44,11 +39,10 @@ public class MyForegroundService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         //Log.d(TAG, "onStartCommand  : 리시버타고 넘어옴");
-        workTime = new WorkTime();
+        workTime = new com.smsoft.lifesupporter_watchdog.WorkTime();
         getPackageList();
         final String port = "5001";
 
@@ -74,17 +68,14 @@ public class MyForegroundService extends Service {
 
 
         try {
-            udpThread = new UdpThread();
+            udpThread = new com.smsoft.lifesupporter_watchdog.UdpThread();
             udpThread.start();
             ServerSocketOpen(port);
         } catch (IOException e) {
             e.printStackTrace();
         }
         return START_STICKY;
-
     }
-
-
 
     public void ServerSocketOpen(String port) throws IOException {
         new Thread(
@@ -168,18 +159,19 @@ public class MyForegroundService extends Service {
 
         try {
             for (int i = 0; i < mApps.size(); i++) {
-                if(mApps.get(i).activityInfo.packageName.startsWith("com.test.sockettestclient")){
+                if(mApps.get(i).activityInfo.packageName.startsWith("com.smsoft.lifesupporter_did")){
                     Log.d(TAG, "실행시킴");
                     break;
                 }
             }
-            Intent intent = getPackageManager().getLaunchIntentForPackage("com.test.sockettestclient");
+            Intent intent = getPackageManager().getLaunchIntentForPackage("com.smsoft.lifesupporter_did");
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         }
         catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
 }
